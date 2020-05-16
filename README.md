@@ -11,3 +11,11 @@ Most of this is hands on examples, but I will to drop some theory and best pract
 Try to work through the examples here instead of reading this like a book.
 
 You can start looking at the table of Contents [here](SUMMARY.md).
+
+
+# License
+
+![License](https://licensebuttons.net/l/by-nc/4.0/88x31.png)
+
+The DevOps book is licensed under [Creative Commons Attribution-NonCommercial 4.0 International License.](http://creativecommons.org/licenses/by-nc/4.0/)
+
