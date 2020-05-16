@@ -42,14 +42,14 @@ One of the primary tenants of good devops practices is  treating servers as "cat
 
 What do you think of when you hear the word "Pets"?
 
-![Pets](https://i.redd.it/7e7lol4ox0b01.jpg)
+<img style="display: block;" src="https://live.staticflickr.com/1671/25750418554_fef67ab03b_b.jpg" alt="Puppies!"><a href="https://www.flickr.com/photos/43556229@N07/25750418554">"Puppies!"</a><span> by <a href="https://www.flickr.com/photos/43556229@N07">alasdair massie</a></span> is licensed under <a href="https://creativecommons.org/licenses/by-sa/2.0/?ref=ccsearch&atype=html" style="margin-right: 5px;">CC BY-NC-SA 2.0</a>
 
 Pets are cute furry animals that you love. You feed them ice cream. You take cute pictures with them and post them on social media. You treat them as your family member. They are often your best friend. You cry when they die. And you promise yourself that you will never get another pet ever because *they leave us too soon man....*
 
 
 Now, what do you think of when you hear the word "Cattle"?
 
-![Cattle](https://i.imgur.com/vxEBriy.jpg)
+<img style="display: block;" src="https://api.creativecommons.engineering/t/http://s0.geograph.org.uk/geophotos/04/16/39/4163993_2649e9ba.jpg" alt="Mid Devon : Cattle Grazing"><a href="http://www.geograph.org.uk/photo/4163993">"Mid Devon : Cattle Grazing"</a><span> by <a href="http://geograph.org.uk/profile/11775">Lewis Clarke</a></span> is licensed under <a href="https://creativecommons.org/licenses/by-sa/2.0/?ref=ccsearch&atype=html" style="margin-right: 5px;">CC BY-SA 2.0</a><a href="https://creativecommons.org/licenses/by-sa/2.0/?ref=ccsearch&atype=html" target="_blank" rel="noopener noreferrer" style="display: inline-block;white-space: none;margin-top: 2px;margin-left: 3px;height: 22px !important;"></a>
 
 Well I know this term is confusing to my fellow Indians because we treat cows as pets. Or mothers. or Forefathers. Or Gods... 
 
