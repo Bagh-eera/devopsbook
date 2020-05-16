@@ -1,0 +1,17 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "hashicorp/bionic64"
+
+  config.vm.define "vm1" do |config_vm1|
+    config_vm1.vm.hostname = "vm1"
+    config_vm1.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "0.0.0.0"
+  end
+
+  config.vm.define "vm2" do |config_vm2|
+    config_vm2.vm.hostname = "vm2"
+    config_vm2.vm.network "forwarded_port", guest: 80, host: 8081, host_ip: "0.0.0.0"
+  end
+end

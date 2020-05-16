@@ -1,0 +1,20 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+nodes_config = (JSON.parse(File.read("cluster.json")))['nodes']
+
+Vagrant.configure("2") do |config|
+
+
+  nodes_config.each do |item|
+
+    config.vm.define item["host_name"] do |vm_config|
+
+      vm_config.vm.box = "hashicorp/bionic64"
+      vm_config.vm.hostname = item["host_name"]
+      vm_config.vm.network "forwarded_port", guest: item["guest_port"], host: item["host_port"], host_ip: item["host_ip"]
+    end
+
+  end
+
+end
