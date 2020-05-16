@@ -1,0 +1,16 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "hashicorp/bionic64"
+
+
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   apt-get update
+  #   apt-get install -y nginx
+  #   sudo cp /vagrant/index.html /var/www/html
+  # SHELL
+
+  config.vm.provision "shell", path: "provisioner.sh"
+end
