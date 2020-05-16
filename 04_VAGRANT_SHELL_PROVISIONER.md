@@ -19,7 +19,7 @@ It is one of the easier provisoners to work with, and ideal for someone who is j
 
 ## Getting the VM to serve a static web page
 
-### Installing Nginc inside the VM
+### Installing Nginx inside the VM
 Create a vagrant file using the `init` command and modify it so that looks like so:
 
 ```
