@@ -49,11 +49,11 @@ Pets are cute furry animals that you love. You feed them ice cream. You take cut
 
 Now, what do you think of when you hear the word "Cattle"?
 
-<img style="display: block;" src="https://api.creativecommons.engineering/t/http://s0.geograph.org.uk/geophotos/04/16/39/4163993_2649e9ba.jpg" alt="Mid Devon : Cattle Grazing"><a href="http://www.geograph.org.uk/photo/4163993">"Mid Devon : Cattle Grazing"</a><span> by <a href="http://geograph.org.uk/profile/11775">Lewis Clarke</a></span> is licensed under <a href="https://creativecommons.org/licenses/by-sa/2.0/?ref=ccsearch&atype=html" style="margin-right: 5px;">CC BY-SA 2.0</a><a href="https://creativecommons.org/licenses/by-sa/2.0/?ref=ccsearch&atype=html" target="_blank" rel="noopener noreferrer" style="display: inline-block;white-space: none;margin-top: 2px;margin-left: 3px;height: 22px !important;"></a>
+<img style="display: block;" src="https://api.creativecommons.engineering/t/http://s0.geograph.org.uk/geophotos/04/16/39/4163993_2649e9ba.jpg" alt="Mid Devon : Cattle Grazing"><br/><a href="http://www.geograph.org.uk/photo/4163993">"Mid Devon : Cattle Grazing"</a><span> by <a href="http://geograph.org.uk/profile/11775">Lewis Clarke</a></span> is licensed under <a href="https://creativecommons.org/licenses/by-sa/2.0/?ref=ccsearch&atype=html" style="margin-right: 5px;">CC BY-SA 2.0</a><a href="https://creativecommons.org/licenses/by-sa/2.0/?ref=ccsearch&atype=html" target="_blank" rel="noopener noreferrer" style="display: inline-block;white-space: none;margin-top: 2px;margin-left: 3px;height: 22px !important;"></a>
 
 Well I know this term is confusing to my fellow Indians because we treat cows as pets. Or mothers. or Forefathers. Or Gods... 
 
-But in this context, cattle are bovine creatures that you raise in large numbers for food. We are not emotionally attached to pets. We don't give them cute names,  rather we pierce  their ears with tags and assign them numbers. We raise them, feed them, fatten them up, and once they grow big enough, make biriyanis, burgers and steaks out of them.
+But in this context, cattle are bovine creatures that you raise in large numbers for food. We are not emotionally attached to cattle. We don't give them cute names,  rather we pierce  their ears with tags and assign them numbers. We raise them, feed them, fatten them up, and once they grow big enough, make biriyanis, burgers and steaks out of them.
 
 *So why is the analogy of Cattle and pets important to Infra as code, geek*, you ask?
 
