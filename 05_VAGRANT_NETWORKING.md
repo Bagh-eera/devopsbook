@@ -188,4 +188,169 @@ How can we connect these VMs together?
 
 To connect the VMs, we need a common network and the VMs need to be connected to, and assigned an IP on this network.
 
-TODO
+
+So, let us first create a network in virtualbox that the VMs can connect to.
+
+Find the Host Network Manager menu for Virtualboc and create a new Adapter. 
+This is what the adapter configuration should look like:
+
+![Adapter Configuration](https://i.imgur.com/PyPaauj.png)
+
+We will now need to create a second network card on our VMs that will connect to this network.
+
+Modify the JSON File called `cluster.json` so that it contains the following content.
+
+```
+{
+    "nodes": [
+        {
+            "host_name": "web-vm",
+            "port_mappings": [
+                { "guest_port": 80, "host_port": 8083, "host_ip": "127.0.0.1" },
+                { "guest_port": 443, "host_port": 14433, "host_ip": "127.0.0.1" }
+            ],
+            "network_configs": [
+                { "ip": "192.167.32.3", "name": "vboxnet0", "adapter": 2 }
+            ]
+        },
+        {
+            "host_name": "data-vm",
+            "port_mappings": [
+                { "guest_port": 80, "host_port": 8084, "host_ip": "127.0.0.1" },
+                { "guest_port": 443, "host_port": 14434, "host_ip": "127.0.0.1" }
+            ],
+            "network_configs": [
+                { "ip": "192.167.32.4", "name": "vboxnet0", "adapter": 2 }
+            ]
+        }
+    ]
+}
+```
+
+Notice the different configurations specified in the json file
+
+* The json file has an array of objects under the key `nodes`
+* Each object in the array has 3 keys: `host_name`, `port_mappings` and `network_configs`.
+* The `port_mappings` key is an array that lists all port mappings. Currently we have 2 ports mapped for each VM.
+* The `network_configs` key is an array that list all the network configurations. Currently we have 1 network configuration.
+
+Now modify the Vagrantfile so that itv reads the configuration JSON and applies them appropriately.
+It should contain the collowing content:
+
+```
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+nodes_config = (JSON.parse(File.read("cluster.json")))['nodes']
+
+Vagrant.configure("2") do |config|
+
+  nodes_config.each do |node|
+
+    config.vm.define node["host_name"] do |vm_config|
+
+      vm_config.vm.box = "hashicorp/bionic64"
+      vm_config.vm.hostname = node["host_name"]
+
+      vm_config.vm.provider "virtualbox" do |vb|
+        vb.memory = 512
+        vb.cpus = 1
+      end
+
+      port_mappings = node["port_mappings"]
+
+      port_mappings.each do |port_mapping|
+        vm_config.vm.network "forwarded_port", 
+          guest: port_mapping["guest_port"], 
+          host: port_mapping["host_port"], 
+          host_ip: port_mapping["host_ip"]
+      end
+
+      network_configs = node["network_configs"]
+
+      network_configs.each do |network_config|
+        vm_config.vm.network "private_network", 
+            ip: network_config['ip'], 
+            name: network_config['name'], 
+            adapter: network_config['adapter']
+      end
+    end
+  end
+end
+```
+
+Understand what the Vagrantfile does differently now.
+
+* It configures the VMs to use 1 CPU and 512 MB of memory
+* It loops through all port mappings and configures the port forwardings between the VMs and the host
+* It loops through all the network configurations and configures the network appropriately.
+
+
+Now bring up the VMs using the  `vagrant up` command.
+Check that both VMs have come up using the `vagrant status` command
+
+```
+vagrant status
+```
+It should present an output like this:
+
+```
+Current machine states:
+
+web-vm                    running (virtualbox)
+data-vm                   running (virtualbox)
+
+This environment represents multiple VMs. The VMs are all listed
+above with their current state. For more information about a specific
+VM, run `vagrant status NAME`.
+```
+
+Now login to one of `web-vm` using the command
+
+```
+vagrant ssh web-vm
+```
+
+Now, inside the VM, run the command to view the network configuration
+
+```
+ip addr
+```
+
+Pay attention to this part of the output
+
+```
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 08:00:27:3a:57:d5 brd ff:ff:ff:ff:ff:ff
+    inet 192.167.32.3/24 brd 192.167.32.255 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fe3a:57d5/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
+We can see that a second network adapter has been configured and it has the IP address `192.167.32.3`.
+
+Exit the VM using the `exit` command and repeat the same steps in the `data-vm`.
+
+Now, the two VMs should be able to communicate over a network.
+Let us see that in action.
+
+1. SSH into the `web-vm` using the `vagrant ssh web-vm` command
+2. Run the following command `netcat -l 4444`. The netcat command will listen to port 4444 and block.
+3. Open a new terminal window and navigate to the folder containing the Vagrantfile
+4. SSH into the `data-vm` using the `vagrant ssh data-vm` command
+5. Now run the command `netcat 192.167.32.3 4444` to start communicating to the `web-vm`. This command will block input
+6. Now type messages into the `data-vm` terminal window. Type in any random strings.
+7. You can see that the messages start appearing in the `web-vm` terminal.
+8. Press Ctrl+C to exit. The commands on both the terminals will exit.
+
+![Communicating between two VMs](https://i.imgur.com/0VpVYfc.png)
+
+
+So there we have it. We can now set up clusters and have them communicate to each other.
+With just enough knowledge about Vagrant, we can be productive. 
+
+Let us now see how we can configure the VMs in a more sophisticated manner.
+How about setting up a simple web app with a web server running on one VM and a database running on another?
+Should be doable, right? We will do just that when we explore configuration management with Ansible.
+
