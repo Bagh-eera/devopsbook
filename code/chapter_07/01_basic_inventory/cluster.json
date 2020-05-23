@@ -1,0 +1,24 @@
+{
+    "nodes": [
+        {
+            "host_name": "web-01",
+            "port_mappings": [
+                { "guest_port": 80, "host_port": 8083, "host_ip": "127.0.0.1" },
+                { "guest_port": 22, "host_port": 22003, "host_ip": "127.0.0.1" }
+            ],
+            "network_configs": [
+                { "ip": "192.167.32.3", "name": "vboxnet0", "adapter": 2 }
+            ]
+        },
+        {
+            "host_name": "db-01",
+            "port_mappings": [
+                { "guest_port": 80, "host_port": 8084, "host_ip": "127.0.0.1" },
+                { "guest_port": 22, "host_port": 22004, "host_ip": "127.0.0.1" }
+            ],
+            "network_configs": [
+                { "ip": "192.167.32.4", "name": "vboxnet0", "adapter": 2 }
+            ]
+        }
+    ]
+}

@@ -13,3 +13,4 @@
 
 ## Ansible
 * [Introduction to Ansible](06_INTRO_TO_ANSIBLE.md)
+* [Working with ansible inventories](07_ANSIBLE_INVENTORIES.md)
