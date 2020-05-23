@@ -1,0 +1,7 @@
+---
+
+- name: Simple Playbook
+  hosts: all
+  roles:
+    - server
+  become: true

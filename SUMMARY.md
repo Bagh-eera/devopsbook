@@ -10,3 +10,6 @@
 * [Getting hands on with Vagrant](03_VAGRANT_CREATE_VM.md)
 * [Introduction to the Shell provisoner](04_VAGRANT_SHELL_PROVISIONER.md)
 * [Networking using Vagrant](05_VAGRANT_NETWORKING.md)
+
+## Ansible
+* [Introduction to Ansible](06_INTRO_TO_ANSIBLE.md)
