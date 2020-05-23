@@ -1,0 +1,9 @@
+---
+
+- name: Install postgres
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+    state: present
+    update_cache: true
