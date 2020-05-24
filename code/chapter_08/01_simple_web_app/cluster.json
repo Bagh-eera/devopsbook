@@ -1,0 +1,31 @@
+{
+    "nodes": [
+        {
+            "host_name": "web-01",
+            "port_mappings": [
+                {
+                    "guest_port": 80,
+                    "host_port": 8080,
+                    "host_ip": "127.0.0.1"
+                },
+                {
+                    "guest_port": 5000,
+                    "host_port": 5000,
+                    "host_ip": "127.0.0.1"
+                },
+                {
+                    "guest_port": 22,
+                    "host_port": 22003,
+                    "host_ip": "127.0.0.1"
+                }
+            ],
+            "network_configs": [
+                {
+                    "ip": "192.167.32.3",
+                    "name": "vboxnet0",
+                    "adapter": 2
+                }
+            ]
+        }
+    ]
+}

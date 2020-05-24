@@ -1,0 +1,90 @@
+
+- name: Install packages
+  apt:
+    name: ["python3", "python3-venv", "supervisor"]
+    state: present
+
+
+- name: Create the app path
+  file:
+    path: /opt/webapp
+    state: directory
+    owner: vagrant
+    group: vagrant
+
+
+- name: Create the virtual env
+  shell: python3 -m venv /opt/webapp/venv
+  args:
+    creates: /opt/webapp/venv/bin/activate
+
+
+- name: Create the requirements file
+  copy:
+    src: code/requirements.txt
+    dest: /opt/webapp
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+
+- name: Create the code file
+  copy:
+    src: code/app.py
+    dest: /opt/webapp
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+
+- name: Install python requirements in virtualenv
+  shell: /opt/webapp/venv/bin/pip install -r /opt/webapp/requirements.txt
+
+
+- name: Create the gunicorn conf file
+  copy:
+    src: gunicorn.conf.py
+    dest: /opt/webapp
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+
+- name: Create the supervisord conf
+  copy:
+    src: app_supervisor.conf
+    dest: /etc/supervisor/conf.d/
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+
+- name: Reload supervisord
+  service:
+    name: supervisor
+    state: reloaded
+    enabled: true
+
+
+- name: Create nginx server block for the nginx app
+  copy:
+    src: app-nginx.conf
+    dest: /etc/nginx/sites-available
+    owner: root
+    group: root
+    mode: '0644'
+
+
+- name: Create symlink for the nginx app
+  file:
+    src: /etc/nginx/sites-available/app-nginx.conf
+    dest: /etc/nginx/sites-enabled/app-nginx.conf
+    state: link
+
+
+- name: Reload nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: true
+
