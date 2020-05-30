@@ -1,2 +1,4 @@
 _book
 **/.vagrant
+deploy.sh
+devopsbook.tar.gz
