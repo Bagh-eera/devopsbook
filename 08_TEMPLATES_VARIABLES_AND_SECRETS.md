@@ -770,16 +770,147 @@ You should see the number of workers set to 3. Because as per our `Vagrantfile`,
 Thus `1*2+1` = `3`.
 
 
-## Group variables
+## Ansible CLI 
 
-## Different places to put variables
-
-### Command line
-
-### Roles
+### The ansible command
+Now that we are fairly comfortable with Ansible, this would be a good time to introduce the ANsible CLI commands. 
 
 
+Add this one line `'ansible_user': 'vagrant',` to your `inventory.py` to specify a new variable called `ansible_user`. 
 
-## Conditionally including variables
+Your `_inventory` variable in the `inventory.py` file should now look like this:
 
-## Secrets
+```
+_inventory = {
+        'webservers': {
+            'hosts': ['web-01'],
+        },
+        '_meta': {
+            'hostvars': {
+                'web-01': {
+                    'ansible_host': '127.0.0.1',
+                    'ansible_port': '22003',
+                    'ansible_user': 'vagrant',
+                    'ansible_private_key_file': '.vagrant/machines/web-01/virtualbox/private_key',
+                    'bind_address': 'localhost',
+                    'bind_port': '5000'
+                }
+            }
+        }
+    }
+```
+
+Now, remove these lines from your `Vagrantfile`.
+
+```
+config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbook.yaml"
+    ansible.inventory_path = "inventory.py"
+  end
+```
+
+We basically do not specify ANY provisioner in the Vagrantfile.
+Vagrant is now only responsible for bringing up the VMs, not provisioning them.
+
+
+Now, bring up the VM using `vagrant up`
+Now, run this command:
+
+```
+ANSIBLE_HOST_KEY_CHECKING=False ansible all -i inventory.py -m ping
+```
+
+You should see the following output:
+
+```
+web-01 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+What just happened?
+
+
+* We set the variable `ANSIBLE_HOST_KEY_CHECKING` to False, to prevent the command from blocking due to SSH key host checking. By default, the SSH client verifies the identity of the host to which it connects. When you log into a remote host that you have never connected before, the remote host key is most likely unknown to your SSH client, and you would be asked to confirm its fingerprint. And when we destroy that VM and spin up a new VM in its place, our local ssh agent throws a warning when we connect to a different VM. We disable this behaviour by disabling the host key checking. It is usually not reccomended to do that for production environments because this is a security mechanism, but in our case, we are spinning up VMs locally, so it is fine.
+
+
+* We invoked the Ansible CLI using the `ansible` command.
+
+* we specified a pattern `all` which means we are to run the command on all the VMs in our inventory.
+
+* We passed the inventory file `inventory.py` using the `-i` command. This would tell the CLI the list of VMs to connect to.
+
+* We ran the Ansible `ping` [module](https://docs.ansible.com/ansible/latest/modules/ping_module.html) directly from the CLI using the `-m` flag. 
+
+
+This is called an `ad-hoc` command where we invoke the modules directly instead of specifying tasks or playbooks.
+
+Here is another example of an `ad-hoc` command.
+
+```
+ANSIBLE_HOST_KEY_CHECKING=False ansible web-01 -i inventory.py -m shell -a 'echo Hello world'
+```
+
+You should see an output like this:
+
+```
+web-01 | CHANGED | rc=0 >>
+Hello world
+```
+
+Here, we ran the `echo Hello world` command on the `web-01` VM using the `shell` [module](https://docs.ansible.com/ansible/latest/modules/shell_module.html).
+
+
+Both of these commands are fairly useless. So let us run something a bit more useful
+
+```
+ANSIBLE_HOST_KEY_CHECKING=False ansible web-01 -i inventory.py -m file -a 'path=/home/vagrant/hello.txt state=touch'
+```
+You should see this output:
+
+```
+web-01 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": true,
+    "dest": "/home/vagrant/hello.txt",
+    "gid": 1000,
+    "group": "vagrant",
+    "mode": "0664",
+    "owner": "vagrant",
+    "size": 0,
+    "state": "file",
+    "uid": 1000
+}
+```
+
+Here the CLI was a bit more useful. We created a file inside the VM using the CLI.
+
+SSH into the VM using the `vagrant ssh` command and see for yourself using the `ls` command. You should see the `hello.txt` file in your home directory.
+
+Ad-hoc commands are powerful. They let you run a command on multiple VMs at the same time.
+
+They are also not reccomended. Because running ad-hoc commands will also introduce configuration drift. And that is against the DevOps principles. So use caution when you use them.
+
+
+### The ansible-playbook CLI
+Let us now use another CLI, `ansible-playbook`.
+
+This lets us run ansible playbooks from the command line.
+
+```
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.py playbook.yaml
+```
+
+You can see the playbook running against the VM that we brought up. Just like usual.
+
+So from now on, let us now run the `ansible-playbook` Ansible CLI commands directly.
+
+From now on, Let us now not use the `Vagrantfile` to provision the VMs.
+
+
