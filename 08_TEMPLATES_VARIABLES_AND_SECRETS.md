@@ -914,3 +914,139 @@ So from now on, let us now run the `ansible-playbook` Ansible CLI commands direc
 From now on, Let us now not use the `Vagrantfile` to provision the VMs.
 
 
+
+
+## Group variables
+What if we want to share variables across multiple machines of similar types? 
+Suppose we have 100 web frontend VMs.
+Specifying the same variables for each of the 100 web frontend VMs can be cumbersome.
+Enter group variables. 
+Group variables are a convenient way to apply variables to multiple VMs at once.
+
+Group variables are better illustrated if we have multiple VMs.
+
+Add one more node to your `cluster.json` file.
+
+```
+{
+  "host_name": "web-02",
+  "port_mappings": [
+      {
+          "guest_port": 80,
+          "host_port": 8081,
+          "host_ip": "127.0.0.1"
+      },
+      {
+          "guest_port": 5000,
+          "host_port": 5001,
+          "host_ip": "127.0.0.1"
+      },
+      {
+          "guest_port": 22,
+          "host_port": 22004,
+          "host_ip": "127.0.0.1"
+      }
+  ],
+  "network_configs": [
+      {
+          "ip": "192.167.32.4",
+          "name": "vboxnet0",
+          "adapter": 2
+      }
+  ]
+}
+```
+
+
+Now, we want both of these VMs to serve the response on port 5000.
+So, let us move the variable that declares the bind address and bind port from the individual node, to the group.
+
+Modify the `_inventory` variable in your `inventory.py` so that it looks like this:
+
+```
+_inventory = {
+    'webservers': {
+        'hosts': ['web-01', 'web-02'],
+        "vars": {
+            'bind_address': 'localhost',
+            'bind_port': '5000'
+        }
+    },
+    '_meta': {
+        'hostvars': {
+            'web-01': {
+                'ansible_ssh_host': '127.0.0.1',
+                'ansible_port': '22003',
+                'ansible_ssh_user': 'vagrant',
+                'ansible_private_key_file': '.vagrant/machines/web-01/virtualbox/private_key',
+                'custom_message': 'Hello from VM 1'
+            },
+            'web-02': {
+                'ansible_ssh_host': '127.0.0.1',
+                'ansible_port': '22004',
+                'ansible_ssh_user': 'vagrant',
+                'ansible_private_key_file': '.vagrant/machines/web-02/virtualbox/private_key',
+                'custom_message': 'Hello from VM 2'
+            }
+        }
+    }
+}
+```
+
+Things to note:
+* We now have 2 VMs in the inventory.
+
+* And the common variables `bind_address` and `bind_port` have been moved to the group.
+
+* We also added a host specific variable called `custom_message`.
+
+
+Now, add this task in your `webapp.yaml` file, right after the `Create the code file` task.
+
+This task  will create a text file which has the content specified in the `custom_message` host variable.
+
+```
+- name: Create the custom message file
+  copy:
+    dest: /opt/webapp/custom_message.txt
+    content: "{{ custom_message }}"
+```
+
+
+Let us now modify our python code to distinguish between VMs that are serving them. 
+
+Modify your python code to read the file to read the text file that we just created. 
+
+It should look like this:
+
+```
+import socket
+
+def app(environ, start_response):
+
+        with open('custom_message.txt') as file:
+            contents = "".join(file.readlines())
+
+        data = bytes(contents, 'utf-8')
+
+        start_response("200 OK", [
+            ("Content-Type", "text/plain"),
+            ("Content-Length", str(len(data)))
+        ])
+        return iter([data])
+
+
+if __name__ == '__main__':
+    from wsgiref.simple_server import make_server
+    srv = make_server('localhost', 8080, app)
+    srv.serve_forever()
+
+```
+
+
+Bring up your VMs using `vagrant up` command.
+
+Now browse to `http://localhost:8080` and `http://localhost:8081`
+
+You should see two different responses. Yay!
+
