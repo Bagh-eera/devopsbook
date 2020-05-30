@@ -14,4 +14,6 @@
 ## Ansible
 * [Introduction to Ansible](06_INTRO_TO_ANSIBLE.md)
 * [Working with ansible inventories](07_ANSIBLE_INVENTORIES.md)
-* [Templates, variables and secrets](08_TEMPLATES_VARIABLES_AND_SECRETS.md)
+* [Deploying a simple web app](08_DEPLOYING_WEB_APP.md)
+* [Templates and variables ](09_TEMPLATES_AND_VARIABLES.md)
+* [Variables in depth](10_VARIABLES_IN_DEPTH.md)

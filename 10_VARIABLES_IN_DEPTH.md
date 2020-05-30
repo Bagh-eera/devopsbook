@@ -1,9 +1,9 @@
 # Ansible Variables in depth
 
-## Different places to put variables
+## Defining variables at various scopes
 
-Ansible is very flexible in terms of defining variables at various levels. 
-Namely, you can set variables at the following levels
+Ansible is very flexible in terms of defining variables at various scopes. 
+Namely, you can set variables at the following scopes
 
 * CLI
 * Inventory group and host
