@@ -1,4 +1,8 @@
 
+- name : Print a debug message
+  debug:
+    msg: We are going to bind the web app at '{{ bind_address }}' address to listen on '{{ bind_port }}' port
+
 - name: Install packages
   apt:
     name: ["python3", "python3-venv", "supervisor"]

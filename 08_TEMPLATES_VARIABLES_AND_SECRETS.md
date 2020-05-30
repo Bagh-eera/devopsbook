@@ -1,5 +1,7 @@
 # Templates, Variables and Secrets
 
+## Deploying a simple python web app using ansible
+
 Let us now attempt something far more sophisticated than anything we have attempted so far.
 
 Let us deploy a simple python web app to a VM.
@@ -183,7 +185,7 @@ ExampleInventory()
 Now let us create the directory structure
 
 ```
-mkdir db web web/tasks web/files web/files/code
+mkdir web web/tasks web/files web/files/code
 touch playbook.yaml inventory.py web/tasks/main.yaml web/tasks/webapp.yaml 
 touch web/files/code/app.py web/files/code/requirements.txt
 ```
@@ -227,7 +229,7 @@ Modify the `playbook.yaml` so that it looks like this:
 
 ```
 
-## Copy the code into the VM
+### Copy the code into the VM
 
 Define the web roles main task file `web/tasks/main.yaml`
 
@@ -305,7 +307,7 @@ python /opt/webapp/venv/bin/python app.py
 Now browse the URL `http://localhost:5000` from the browser in your host to make sure that this works.
 Remember, we mapped the `5000` port on the guest to the `5000` port in the host.
 
-## Using Gunicorn
+### Using Gunicorn
 Gunicorn lets us run multiple worker processes for the web server. 
 
 Let us see that in action.
@@ -366,7 +368,7 @@ Add the following task to `webapp.yaml`
 ```
 
 
-## Running the gunicorn using supervisord
+### Running the gunicorn using supervisord
 
 We will now use Supervisord to run the gunicorn command.
 Supervisord provides process control features. It provides crash recovery and ensures that the web app is running at all times
@@ -426,7 +428,7 @@ Modify the `webapp.yaml` to include the following tasks:
 Now provision the VM again using the `vagrant provision` command.
 
 
-## Installing and configuring nginx.
+### Installing and configuring nginx.
 
 Now let us implement reverse proxy to forward the traffic from port 80 to the gunicorn managed web app running at port 5000.
 
@@ -531,7 +533,7 @@ Now, modify the `nginx.yaml` file to have the following content:
 In this task file, we installed nginx, copied over the nginx configuration file and created the appropriate directories as required by nginx, and then reloaded the nginx service to load the latest configuration file.
 
 
-## Serving the app using nginx.
+### Serving the app using nginx.
 
 Create the nginx configuration file for serving the app
 
@@ -602,3 +604,119 @@ Now provision the VM using the `vagrant provision` command and browse to `http:/
 
 You can see that web app running.
 
+
+## using templates and variables
+
+So we got the code up and running. WHich is good.
+
+But, we hardcoded a bunch of configurations in the files that get deployed into the VM.
+
+For example, the port 5000 is hard coded in both the `gunicorn.conf.py` and the `app-nginx.conf` files.
+
+In advanced cases, we would want to specify that port as a part of a configuration variable, and have that variable value specified in the file.
+
+Enter templates. Ansible supports templating using the Jinja2 templating engine. Jinja2 is a robust, versatile templating engine popular among python developers.
+
+Templating allows us to specify templates instead of files and substitute variables in the template files when they get provisioned.
+
+Variables can be declared in your inventory.
+
+Modify your `inventory.py` file to add the templating variables.
+
+```
+_inventory = {
+        'webservers': {
+            'hosts': ['web-01'],
+        },
+        '_meta': {
+            'hostvars': {
+                'web-01': {
+                    'ansible_host': '127.0.0.1',
+                    'ansible_port': '22003',
+                    'ansible_private_key_file': '.vagrant/machines/web-01/virtualbox/private_key',
+                    'bind_address': 'localhost',
+                    'bind_port': '5000'
+                }
+            }
+        }
+    }
+```
+
+Here, we declared two templating variables, `bind_address` and `bind_port`.
+
+Now, let us use Ansible's templating mechanism to create files.
+
+Create the `templates` directory and move over the `gunicorn.conf.py` and the `app-nginx.conf` files over.
+
+```
+mkdir web/templates
+mv web/files/gunicorn.conf.py web/templates/gunicorn.conf.j2
+mv web/files/app-nginx.conf web/templates/app-nginx.conf.j2
+```
+
+Here we are using the `j2` extension, which is typically used to denote Jinja2 templates.
+
+Let us now use template variables in these template files.
+
+In the `gunicorn.conf.j2` file, replace the line that specifies the bind address with the following line:
+
+```
+bind = '{{ bind_address}}:{{ bind_port }}'
+```
+
+Then, in the `app-nginx.conf`, replace the line where we specify the `proxy_pass` setting as follows:
+
+```
+proxy_pass         "http://{{ bind_address }}:{{ bind_port }}";
+```
+
+Now, modify your `webapp.yaml` task file to use these templates instead of files in the respective tasks
+
+```
+- name: Create the gunicorn conf file
+  template:
+    src: gunicorn.conf.j2
+    dest: /opt/webapp/gunicorn.conf.py
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+```
+
+and 
+
+```
+- name: Create nginx server block for the nginx app
+  template:
+    src: app-nginx.conf.j2
+    dest: /etc/nginx/sites-available/app-nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+```
+
+Bring up the VMs now. Once they are up, you can inspect the contents of the respective files to see that the variables have been substituted accordingly. SSH into the VM using `vagrant ssh` command and run the following commands
+
+```
+sudo cat /opt/webapp/gunicorn.conf.py
+sudo cat /etc/nginx/sites-available/app-nginx.conf
+```
+
+We can even use the ansible variables in our tasks. Add this task anywhere in the `webapp.yaml` file, or any other task file for that matter.
+
+```
+- name : Print a debug message
+  debug:
+    msg: We are going to bind the web app at '{{ bind_address }}' address to listen on '{{ bind_port }}' port
+
+```
+
+
+You should see the following output
+
+
+```
+TASK [web : Print a debug message] *********************************************
+ok: [web-01] => {
+    "msg": "We are going to bind the web app at 'localhost' address to listen on '5000' port"
+}
+```
