@@ -713,10 +713,73 @@ We can even use the ansible variables in our tasks. Add this task anywhere in th
 
 You should see the following output
 
-
 ```
 TASK [web : Print a debug message] *********************************************
 ok: [web-01] => {
     "msg": "We are going to bind the web app at 'localhost' address to listen on '5000' port"
 }
 ```
+
+## System variables
+Not all variables have to be explicitly declared.
+Some variables are implicitly set by Ansible,s to be discoved and used by the system.
+
+These variables are also called `facts`.
+
+Put this debug statement at the top of the `nginx.yaml` file to see them
+
+```
+- name: Print system variables
+  debug: 
+    var: ansible_facts
+```
+
+You should see a large dictionary getting printed. It would look something like this:
+
+```
+ok: [web-01] => {
+    "ansible_facts": {
+        "all_ipv4_addresses": [
+            "192.167.32.3",
+            "10.0.2.15"
+        ],
+        "all_ipv6_addresses": [
+            "fe80::a00:27ff:fe95:36c6",
+            "fe80::a00:27ff:febb:1475"
+...
+...
+...
+```
+Scroll through the printed facts. The dictionary has some interesting variables, and depending on certain usecases, there are some really creative ways to use them.
+
+Replace the line that specifies the number of workers in the `gunicorn.conf.j2` file with this:
+
+```
+workers = {{ ansible_facts['processor_vcpus'] * 2 + 1 }}
+```
+
+Here, we read the number of processor vCPU available from the ansible facts, and use the arithmetic operations inside the Jinja2 templating to specify the number of workers.
+
+Run the `vagrant provision` command and inspect the contents of the files using the following command:
+
+```
+sudo cat /opt/webapp/gunicorn.conf.py
+```
+
+You should see the number of workers set to 3. Because as per our `Vagrantfile`, each machine has 1 vCPU.
+Thus `1*2+1` = `3`.
+
+
+## Group variables
+
+## Different places to put variables
+
+### Command line
+
+### Roles
+
+
+
+## Conditionally including variables
+
+## Secrets
