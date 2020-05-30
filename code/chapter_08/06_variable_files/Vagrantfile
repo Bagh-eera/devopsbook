@@ -1,0 +1,41 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+nodes_config = (JSON.parse(File.read("cluster.json")))['nodes']
+
+Vagrant.configure("2") do |config|
+
+  nodes_config.each do |node|
+
+    config.vm.define node["host_name"] do |vm_config|
+
+      vm_config.vm.box = "hashicorp/bionic64"
+      vm_config.vm.hostname = node["host_name"]
+
+      vm_config.vm.provider "virtualbox" do |vb|
+        vb.memory = 512
+        vb.cpus = 1
+      end
+
+      port_mappings = node["port_mappings"]
+
+      port_mappings.each do |port_mapping|
+        vm_config.vm.network "forwarded_port", 
+          guest: port_mapping["guest_port"], 
+          host: port_mapping["host_port"], 
+          host_ip: port_mapping["host_ip"]
+      end
+
+      network_configs = node["network_configs"]
+
+      network_configs.each do |network_config|
+        vm_config.vm.network "private_network", 
+            ip: network_config['ip'], 
+            name: network_config['name'], 
+            adapter: network_config['adapter']
+      end
+    end
+  end
+
+end
+
