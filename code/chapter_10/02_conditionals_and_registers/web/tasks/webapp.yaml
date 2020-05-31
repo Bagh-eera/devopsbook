@@ -1,0 +1,111 @@
+
+- name : Print a debug message
+  debug:
+    msg: We are going to bind the web app at '{{ bind_address }}' address to listen on '{{ bind_port }}' port
+
+
+- name: Install packages
+  apt:
+    name: ["python3", "python3-venv", "supervisor"]
+    state: present
+
+
+- name: Create the app path
+  file:
+    path: /opt/webapp
+    state: directory
+    owner: vagrant
+    group: vagrant
+
+
+- name: Create the virtual env
+  shell: python3 -m venv /opt/webapp/venv
+  args:
+    creates: /opt/webapp/venv/bin/activate
+
+
+- name: Create the requirements file
+  copy:
+    src: code/requirements.txt
+    dest: /opt/webapp
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+
+- name: Create the code file
+  copy:
+    src: code/app.py
+    dest: /opt/webapp
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+  register: code_file
+
+- name: Create the custom message file
+  template:
+    src: custom_message.txt.j2
+    dest: /opt/webapp/custom_message.txt
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+  vars:
+    task_var1: "This variable is set as a task variable from web/tasks/webapp.yaml line 52"
+
+
+- name: Install python requirements in virtualenv
+  shell: /opt/webapp/venv/bin/pip install -r /opt/webapp/requirements.txt
+
+
+- name: Create the gunicorn conf file
+  template:
+    src: gunicorn.conf.j2
+    dest: /opt/webapp/gunicorn.conf.py
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+  register: gunicorn_conf
+
+
+- name: Create the supervisord conf
+  copy:
+    src: app_supervisor.conf
+    dest: /etc/supervisor/conf.d/
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+  register: supervisor_conf
+
+
+- name: Reload supervisord
+  service:
+    name: supervisor
+    state: reloaded
+    enabled: true
+  when: code_file.changed or gunicorn_conf.changed or supervisor_conf.changed
+
+
+- name: Create nginx server block for the nginx app
+  template:
+    src: app-nginx.conf.j2
+    dest: /etc/nginx/sites-available/app-nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: nginx_app_conf
+
+
+- name: Create symlink for the nginx app
+  file:
+    src: /etc/nginx/sites-available/app-nginx.conf
+    dest: /etc/nginx/sites-enabled/app-nginx.conf
+    state: link
+
+
+- name: Reload nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: true
+  when: nginx_app_conf.changed
+

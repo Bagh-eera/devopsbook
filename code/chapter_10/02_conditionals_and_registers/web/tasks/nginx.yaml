@@ -1,0 +1,43 @@
+---
+- name: Print system variables
+  debug: 
+    var: ansible_facts
+
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Create the nginx config file
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx/
+    owner: root
+    group: root
+    mode: '0644'
+  register: nginx_config
+
+
+- name: create sites-available directory
+  file:
+    path: /etc/nginx/sites-available
+    state: directory
+    owner: root
+    group: root
+
+
+- name: create sites-enabled directory
+  file:
+    path: /etc/nginx/sites-enabled
+    state: directory
+    owner: root
+    group: root
+
+
+- name: Reload nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: true
+  when: nginx_config.changed
