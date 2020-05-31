@@ -300,11 +300,11 @@ Run the following command
 
 ```
 cd /opt/webapp/
-python /opt/webapp/venv/bin/python app.py
+source venv/bin/activate
+python app.py
 ```
 
-Now browse the URL `http://localhost:5000` from the browser in your host to make sure that this works.
-Remember, we mapped the `5000` port on the guest to the `5000` port in the host.
+Now curl the URL `http://localhost:8080` from another terminal after having run `vagrant ssh to get into the VM.
 
 ### Using Gunicorn
 Gunicorn lets us run multiple worker processes for the web server. 
