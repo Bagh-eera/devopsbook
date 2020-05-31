@@ -17,3 +17,5 @@
 * [Deploying a simple web app](08_DEPLOYING_WEB_APP.md)
 * [Templates and variables ](09_TEMPLATES_AND_VARIABLES.md)
 * [Variables in depth](10_VARIABLES_IN_DEPTH.md)
+* [Secrets](11_ANSIBLE_SECRETS.md)
+* [Tags and Handlers](12_HANDLERS_AND_TAGS.md)

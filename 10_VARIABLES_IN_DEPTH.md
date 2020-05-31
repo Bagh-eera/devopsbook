@@ -483,5 +483,273 @@ Similarly, the nginx service needs to be reloaded or restarted only if `/etc/ngi
 Destroy and recreate the VMs and then run the playbook command multiple times to see this in action.
 
 
+
 ## Loops
 
+Let us now learn about loops. 
+The with_items keyword allows us to loop across an array of items.
+
+Add this snippet in your nginx.yaml
+
+```
+- name: "loop through list"
+  debug:
+    msg: "An item: {{ item }}"
+  with_items:
+    - 1
+    - 2
+    - 3
+```
+
+You should see an output like this:
+
+```
+TASK [web : loop through list] *********************************************************************************************************************************************
+ok: [web-01] => (item=1) => {
+    "msg": "An item: 1"
+}
+ok: [web-01] => (item=2) => {
+    "msg": "An item: 2"
+}
+ok: [web-01] => (item=3) => {
+    "msg": "An item: 3"
+}
+ok: [web-02] => (item=1) => {
+    "msg": "An item: 1"
+}
+ok: [web-02] => (item=2) => {
+    "msg": "An item: 2"
+}
+ok: [web-02] => (item=3) => {
+    "msg": "An item: 3"
+}
+```
+
+## Getting our web app to talk to a database.
+
+Let us now do something fun. Let us get the web app to talk to a key value store.
+
+We will use Redis as a key value store, that will store the total hit count of our web app across both the web servers.
+
+Add a new node to your `cluster.json`
+
+```
+,
+{
+      "host_name": "db-01",
+      "port_mappings": [
+          {
+              "guest_port": 22,
+              "host_port": 22005,
+              "host_ip": "127.0.0.1"
+          }
+      ],
+      "network_configs": [
+          {
+              "ip": "192.167.32.5",
+              "name": "vboxnet0",
+              "adapter": 2
+          }
+      ]
+  }
+```
+Here we added a new VM called `db-01` to our cluster.
+
+Now let us define this VM in our inventory.
+
+Modify the `_inventory` variable in `inventory.py` to look like this:
+
+```
+_inventory = {
+    'webservers': {
+        'hosts': ['web-01', 'web-02'],
+        "vars": {
+            'bind_address': 'localhost',
+            'bind_port': '5000',
+            'inventory_group_var1': "This is set as an inventory group variable from inventory.py line 16"
+        }
+    },
+    'dbservers': {
+        'hosts': ['db-01'],
+        'vars': {}
+    },
+    '_meta': {
+        'hostvars': {
+            'web-01': {
+                'ansible_ssh_host': '127.0.0.1',
+                'ansible_port': '22003',
+                'ansible_ssh_user': 'vagrant',
+                'ansible_private_key_file': '.vagrant/machines/web-01/virtualbox/private_key',
+                'inventory_host_var1': "This is set as an inventory host variable from inventory.py line 27"
+            },
+            'web-02': {
+                'ansible_ssh_host': '127.0.0.1',
+                'ansible_port': '22004',
+                'ansible_ssh_user': 'vagrant',
+                'ansible_private_key_file': '.vagrant/machines/web-02/virtualbox/private_key',
+                'inventory_host_var1': "This is set as an inventory host variable from inventory.py line 34"
+            },
+            'db-01': {
+                'ansible_ssh_host': '127.0.0.1',
+                'ansible_port': '22005',
+                'ansible_ssh_user': 'vagrant',
+                'ansible_private_key_file': '.vagrant/machines/db-01/virtualbox/private_key',
+            }
+        }
+    }
+}
+```
+Here we defined a new group called `dbservers` which has one host `db-01`
+
+Now let us create the role to configure the `dbservers` group.
+
+Create the role directory and the task file
+
+```
+mkdir -p db/tasks
+touch db/tasks/main.yaml
+```
+
+Now modify your `playbook.yaml` to apply this role. Add this snippet to your `playbook.yaml`
+
+```
+- name: Configure db servers
+  hosts: dbservers
+  roles:
+    - db
+  become: true
+  
+```
+
+Now modify the `db/tasks/main.yaml` file to look like this
+
+```
+---
+
+- name: Install redis server
+  apt:
+    name: redis-server
+    state: present
+    update_cache: true
+
+
+- name: Allow redis to listen to IP on eth1
+  lineinfile:
+    dest: /etc/redis/redis.conf
+    line: 'bind {{ ansible_facts["eth1"]["ipv4"]["address"] }}'
+    create: true
+
+- name: Set redis password
+  lineinfile:
+    dest: /etc/redis/redis.conf
+    line: 'requirepass foobared'
+    create: true
+
+- name: allow ssh
+  ufw:
+    rule: allow
+    port: '22'
+
+
+- name: allow redis traffic from all web servers
+  ufw:
+    rule: allow
+    proto: tcp
+    src: "{{ hostvars[item]['ansible_facts']['eth1']['ipv4']['address'] }}"
+    port: '6379'
+    comment: Allow traffic from webserver
+  with_items: "{{ groups['webservers'] }}"
+
+
+- name: enable UFW
+  ufw:
+    state: enabled
+
+- name: Restart redis service
+  service:
+    name: redis
+    state: restarted
+    enabled: true
+
+```
+
+Here, we do the following:
+
+1. We install redis
+
+2. Redis listens only to the localhost endpoint by default. So we use a module called `lineinfile` to modify the redis configuration file so that it listens to the IP on eth1 network card.
+
+3. Redis has a single user and does not have a password by default. We set a password here.. The password is currently in plaintext, we will fix it in future lessons.
+
+4. Because we have a weak password, we are going to turn on the firewall. This will prevent us from SSHing into the VM. So we enable SSH on the firewall by opening port 22
+
+5. We also need to allow the traffic from our web servers to port 6379 because that is the port that redis listens to by default. We do this by getting a list of hosts in the `webservers` group using the `groups` magic variable. We then get the host variables set on each VM by using the `hostvars` magic variable. We then enable traffic from that IP address on port 6379. This is a clever use of looping.
+
+6. We then enable the firewall
+
+7. We restart the redis service for the changes to take affect.
+
+
+Now, modify your python code in `app.py` to read and write to this redis cluster. 
+
+```
+import socket
+import redis
+
+def app(environ, start_response):
+
+        r = redis.Redis(host="192.167.32.5", password="foobared")
+        
+        if r.exists("hit_count"):
+            hit_count = int(r.get("hit_count"))
+        else:
+            hit_count = 1
+        
+        hit_count = hit_count + 1
+        r.set("hit_count", hit_count)
+
+
+        data = bytes("Hello World, this website has been visited {0} times".format(hit_count), 'utf-8')
+
+        start_response("200 OK", [
+            ("Content-Type", "text/plain"),
+            ("Content-Length", str(len(data)))
+        ])
+        return iter([data])
+
+
+if __name__ == '__main__':
+    from wsgiref.simple_server import make_server
+    srv = make_server('localhost', 8080, app)
+    srv.serve_forever()
+
+```
+
+
+Let us also add the redis python client to our requirements.txt
+
+```
+gunicorn
+redis
+```
+
+Let us now bring up our VMs using the `vagrant up` command.
+
+
+Now run the `ansible-playbook` command again.
+
+```
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.py playbook.yaml --extra-vars "command_var1='Set from CLI'"
+```
+
+
+Once everything is up,  browse to `http://localhost:8080` and `http://localhost:8081`
+
+
+You should see the following content being rendered.
+
+```
+Hello World, this website has been visited x times
+```
+
+Here x would be a number that increases each time you refresh the page.
