@@ -1,0 +1,4 @@
+---
+
+playbook_group_var1: "This is a variable set as a playbook group variable from group_vars/webservers.yaml line 3"
+
