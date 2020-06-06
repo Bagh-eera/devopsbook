@@ -1,0 +1,45 @@
+---
+
+- name: Install redis server
+  apt:
+    name: redis-server
+    state: present
+    update_cache: true
+
+
+- name: Allow redis to listen to IP on eth1
+  lineinfile:
+    dest: /etc/redis/redis.conf
+    line: 'bind {{ redis_host }}'
+    create: true
+
+- name: Set redis password
+  lineinfile:
+    dest: /etc/redis/redis.conf
+    regexp: "^requirepass [a-zA-Z0-9]+$"
+    line: 'requirepass {{ redis_password }}'
+    create: true
+  tags: [rotate-db-password]
+  notify:
+  - restart redis
+
+- name: allow ssh
+  ufw:
+    rule: allow
+    port: '22'
+
+
+- name: allow redis traffic from all web servers
+  ufw:
+    rule: allow
+    proto: tcp
+    src: "{{ hostvars[item]['ansible_facts']['eth1']['ipv4']['address'] }}"
+    port: '6379'
+    comment: Allow traffic from webserver
+  with_items: "{{ groups['webservers'] }}"
+
+
+- name: enable UFW
+  ufw:
+    state: enabled
+

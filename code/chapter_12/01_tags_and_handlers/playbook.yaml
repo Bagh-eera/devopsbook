@@ -1,0 +1,19 @@
+---
+
+- name: Configure web servers
+  hosts: webservers
+  roles:
+    - web
+  become: true
+  vars:
+    playbook_var1: "This is a variable set as a playbook variable from playbook.yaml line 10"
+
+
+
+
+- name: Configure db servers
+  hosts: dbservers
+  roles:
+    - db
+  become: true
+  

@@ -1,0 +1,3 @@
+---
+
+playbook_host_var1: "This is a variable set as a playbook host variable from host_vars/web-02.yaml line 3"
